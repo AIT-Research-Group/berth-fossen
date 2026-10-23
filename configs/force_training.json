@@ -1,0 +1,39 @@
+{
+  "seed": 20260924,
+  "simulation_config": "configs/demo.json",
+  "hydro_reference": "data/reference/mss_tanker/tanker.mat",
+  "scenario_counts": {
+    "train": 32,
+    "validation": 8,
+    "calibration": 8,
+    "test": 8
+  },
+  "scenario_duration_s": 14400.0,
+  "simulation_dt_s": 0.5,
+  "wave_components": 512,
+  "history_steps": 60,
+  "horizon_steps": 30,
+  "train_stride": 3,
+  "eval_stride": 3,
+  "hidden_size": 48,
+  "noise_size": 12,
+  "batch_size": 64,
+  "epochs": 100,
+  "patience": 100,
+  "learning_rate": 0.001,
+  "ensemble_train": 8,
+  "ensemble_validation": 24,
+  "ensemble_test": 100,
+  "mean_loss_weight": 0.2,
+  "adversarial_weight": 0.05,
+  "adversarial_warmup_epochs": 3,
+  "threads": 4,
+  "data_workers": 8,
+  "device": "cuda",
+  "demo_thresholds": {
+    "gust_mps": 13.0,
+    "reflected_hs_m": 0.7
+  },
+  "bootstrap_replicates": 200,
+  "task": "loads"
+}

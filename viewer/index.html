@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sóng và tải tại cầu cảng</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+<script src="vendor/plotly.min.js"></script>
+</head>
+<body>
+<nav class="tabs" role="tablist" aria-label="Chế độ xem">
+  <button role="tab" data-tab="wave" aria-selected="true">Mặt sóng η(x, t)</button>
+  <button role="tab" data-tab="spectrum" aria-selected="false">Phổ theo thời gian</button>
+  <button role="tab" data-tab="sea" aria-selected="false">Biển &amp; tàu</button>
+  <button role="tab" data-tab="vessel" aria-selected="false">Tàu &amp; tải</button>
+  <button role="tab" data-tab="forecast" aria-selected="false">Dự báo AI</button>
+</nav>
+
+<!-- Tab 1: free surface -->
+<section class="page" id="page-wave" role="tabpanel">
+  <aside class="panel">
+    <h1>Mặt sóng η(x, t)</h1>
+    <p class="note">Trường sóng sạch dựng lại từ seed và cấu hình của từng lần chạy. Tường tại x = 0, nước x &lt; 0.</p>
+    <label>Nguồn dữ liệu <select id="source"></select></label>
+    <fieldset>
+      <legend>Thành phần</legend>
+      <label class="inline"><input type="radio" name="component" value="total" checked> Tổng</label>
+      <label class="inline"><input type="radio" name="component" value="incident"> Sóng tới</label>
+      <label class="inline"><input type="radio" name="component" value="reflected"> Phản xạ</label>
+    </fieldset>
+    <div class="grid2">
+      <label>Bắt đầu t₀ (s)<input id="t0" type="number" min="0" step="10" value="600"></label>
+      <label>Độ dài (s)<input id="span" type="number" min="5" max="1800" step="10" value="120"></label>
+      <label>x nhỏ nhất (m)<input id="xmin" type="number" max="-1" step="5" value="-60"></label>
+      <label>Độ phân giải
+        <select id="resolution">
+          <option value="81,241">Nhanh</option>
+          <option value="161,481" selected>Chuẩn</option>
+          <option value="241,961">Cao</option>
+        </select>
+      </label>
+    </div>
+    <input id="t0range" type="range" min="0" max="1800" step="10" value="600" aria-label="Kéo t₀">
+    <div class="grid2">
+      <label>Colormap
+        <select id="colormap">
+          <option value="parula" selected>parula</option><option value="jet">jet</option>
+          <option value="viridis">viridis</option><option value="balance">xanh–đỏ (đối xứng)</option>
+        </select>
+      </label>
+      <label>Phóng đại trục z<input id="zscale" type="number" min="0.1" max="10" step="0.1" value="1"></label>
+    </div>
+    <button id="draw" class="primary">Vẽ</button>
+    <fieldset>
+      <legend>Góc nhìn</legend>
+      <div class="buttons">
+        <button data-view="3d">3D (view −37.5°, 30°)</button>
+        <button data-view="top">Trên xuống (x–t)</button>
+        <button data-view="side">Mặt cắt x–η</button>
+      </div>
+    </fieldset>
+    <label>Lát cắt thời gian t* (s) <output id="sliceValue"></output>
+      <input id="slice" type="range" min="0" max="1" step="1" value="0">
+    </label>
+    <dl id="info"></dl>
+    <p id="status" class="status" role="status"></p>
+  </aside>
+  <main>
+    <div id="surface" class="plot big"></div>
+    <div class="row">
+      <div id="sliceplot" class="plot"></div>
+      <div id="profile" class="plot"></div>
+    </div>
+  </main>
+</section>
+
+<!-- Tab 2: spectra over time -->
+<section class="page" id="page-spectrum" role="tabpanel" hidden>
+  <aside class="panel">
+    <h1>Phổ theo thời gian</h1>
+    <p class="note">Mô phỏng lại tín hiệu 3 đầu đo (có nhiễu) và tách sóng tới/phản xạ bằng Welch cho từng cửa sổ 10 phút, đúng như khi sinh đặc trưng huấn luyện.</p>
+    <label>Nguồn dữ liệu <select id="sp-source"></select></label>
+    <fieldset>
+      <legend>Thành phần</legend>
+      <label class="inline"><input type="radio" name="sp-component" value="reflected" checked> Phản xạ</label>
+      <label class="inline"><input type="radio" name="sp-component" value="incident"> Sóng tới</label>
+    </fieldset>
+    <div class="grid2">
+      <label>Thang
+        <select id="sp-scale"><option value="log" selected>log₁₀</option><option value="linear">tuyến tính</option></select>
+      </label>
+      <label>Colormap
+        <select id="sp-colormap"><option value="parula" selected>parula</option><option value="jet">jet</option>
+          <option value="viridis">viridis</option></select>
+      </label>
+    </div>
+    <fieldset>
+      <legend>Góc nhìn</legend>
+      <div class="buttons">
+        <button data-view="3d">3D (view −37.5°, 30°)</button>
+        <button data-view="top">Trên xuống (spectrogram)</button>
+        <button data-view="side">Mặt cắt f–S</button>
+      </div>
+    </fieldset>
+    <label>Cửa sổ <output id="sp-window-value"></output>
+      <input id="sp-window" type="range" min="0" max="1" step="1" value="0">
+    </label>
+    <dl id="sp-info"></dl>
+    <p id="sp-status" class="status" role="status"></p>
+  </aside>
+  <main>
+    <div id="sp-surface" class="plot big"></div>
+    <div class="row">
+      <div id="sp-slice" class="plot"></div>
+      <div id="sp-hm0" class="plot"></div>
+    </div>
+  </main>
+</section>
+
+<!-- Tab: sea surface around the ship -->
+<section class="page" id="page-sea" role="tabpanel" hidden>
+  <aside class="panel">
+    <h1>Biển &amp; tàu</h1>
+    <p class="note">Mặt biển η(x, y, t) sinh từ phổ của kịch bản (sóng tới + phản xạ gương từ tường) quanh tàu neo tại vị trí giữ. Tàu vẽ đúng tỉ lệ: thân Wigley với B/L, T/L của tàu dầu MSS. Tàu đứng yên; không vẽ chuyển động do sóng. Trường sóng là nước hở: chưa tính nhiễu xạ và bức xạ quanh thân tàu.</p>
+    <label>Nguồn dữ liệu <select id="se-source"></select></label>
+    <fieldset>
+      <legend>Thành phần</legend>
+      <label class="inline"><input type="radio" name="se-component" value="total" checked> Tổng</label>
+      <label class="inline"><input type="radio" name="se-component" value="incident"> Sóng tới</label>
+      <label class="inline"><input type="radio" name="se-component" value="reflected"> Phản xạ</label>
+    </fieldset>
+    <div class="grid2">
+      <label>Bắt đầu t₀ (s)<input id="se-t0" type="number" min="0" step="10" value="600"></label>
+      <label>Bước khung (s)
+        <select id="se-step"><option value="0.25">0.25</option><option value="0.5" selected>0.5</option>
+          <option value="1">1</option></select>
+      </label>
+      <label>Số khung<input id="se-frames" type="number" min="2" max="120" step="10" value="40"></label>
+      <label>Lưới
+        <select id="se-n"><option value="100">100 × 100</option><option value="140" selected>140 × 140</option>
+          <option value="180">180 × 180</option></select>
+      </label>
+    </div>
+    <button id="se-load" class="primary">Tính mặt biển</button>
+    <div class="grid2">
+      <label>Phóng đại η<input id="se-eta" type="number" min="1" max="50" step="1" value="5"></label>
+      <label>Phóng đại đứng cả cảnh<input id="se-vertical" type="number" min="1" max="20" step="1" value="3"></label>
+      <label>Colormap
+        <select id="se-colormap"><option value="balance" selected>xanh–đỏ</option><option value="parula">parula</option>
+          <option value="jet">jet</option></select>
+      </label>
+      <label>Tốc độ phát
+        <select id="se-speed"><option value="0.5">×0.5</option><option value="1" selected>thời gian thực</option>
+          <option value="2">×2</option></select>
+      </label>
+    </div>
+    <button id="se-play" class="primary">▶ Phát</button>
+    <label>Khung hình <output id="se-frame-value"></output>
+      <input id="se-frame" type="range" min="0" max="1" step="1" value="0">
+    </label>
+    <fieldset>
+      <legend>Góc nhìn</legend>
+      <div class="buttons">
+        <button data-view="3d">3D (view −37.5°, 30°)</button>
+        <button data-view="top">Mặt bằng (trên xuống)</button>
+        <button data-view="side">Nhìn dọc cầu</button>
+      </div>
+    </fieldset>
+    <dl id="se-info"></dl>
+    <p id="se-status" class="status" role="status"></p>
+  </aside>
+  <main>
+    <div id="se-scene" class="plot big"></div>
+    <div class="row">
+      <div id="se-spectrum" class="plot"></div>
+      <div id="se-centerline" class="plot tall"></div>
+    </div>
+  </main>
+</section>
+
+<!-- Tab 3: vessel and loads -->
+<section class="page" id="page-vessel" role="tabpanel" hidden>
+  <aside class="panel">
+    <h1>Tàu &amp; tải trọng</h1>
+    <p class="note">Phát lại trạng thái 3 bậc tự do đã lưu trong vessel.npz. Thân tàu Wigley theo tỉ lệ tàu dầu MSS; mũi tên là lực gió, sóng và tổng (hệ BODY quay sang hệ toàn cục).</p>
+    <label>Lần chạy <select id="vs-run"></select></label>
+    <div class="grid2">
+      <label>Phóng đại chuyển động<input id="vs-exaggeration" type="number" min="1" max="200" step="1" value="20"></label>
+      <label>Tốc độ phát
+        <select id="vs-speed"><option value="10">×10</option><option value="30" selected>×30</option>
+          <option value="100">×100</option></select>
+      </label>
+    </div>
+    <button id="vs-play" class="primary">▶ Phát lại</button>
+    <label>Thời điểm <input id="vs-time" type="range" min="0" max="1" step="1" value="0"></label>
+    <fieldset>
+      <legend>Góc nhìn</legend>
+      <div class="buttons">
+        <button data-view="3d">3D (view −37.5°, 30°)</button>
+        <button data-view="top">Mặt bằng (trên xuống)</button>
+        <button data-view="side">Nhìn dọc cầu</button>
+      </div>
+    </fieldset>
+    <dl id="vs-info"></dl>
+    <p id="vs-status" class="status" role="status"></p>
+  </aside>
+  <main>
+    <div id="vs-scene" class="plot big"></div>
+    <div class="row">
+      <div id="vs-loads" class="plot tall"></div>
+      <div id="vs-motion" class="plot tall"></div>
+    </div>
+  </main>
+</section>
+
+<!-- Tab 4: AI forecasts -->
+<section class="page" id="page-forecast" role="tabpanel" hidden>
+  <aside class="panel">
+    <h1>Dự báo AI (tập test)</h1>
+    <p class="note">Dự báo đã lưu khi đánh giá; không chạy suy luận mới. Trục: chân trời 1–30 phút × thời điểm phát hành.</p>
+    <label>Thí nghiệm <select id="fc-run"></select></label>
+    <label>Mô hình <select id="fc-model"></select></label>
+    <div class="grid2">
+      <label>Kịch bản <select id="fc-scenario"></select></label>
+      <label>Colormap
+        <select id="fc-colormap"><option value="parula" selected>parula</option><option value="jet">jet</option>
+          <option value="viridis">viridis</option></select>
+      </label>
+    </div>
+    <label>Biến <select id="fc-variable"></select></label>
+    <fieldset>
+      <legend>Mặt hiển thị</legend>
+      <label class="inline"><input type="radio" name="fc-mode" value="mean" checked> Dự báo</label>
+      <label class="inline"><input type="radio" name="fc-mode" value="error"> Sai số</label>
+      <label class="inline"><input type="radio" name="fc-mode" value="width"> Độ rộng 90%</label>
+      <label class="inline"><input type="checkbox" id="fc-target" checked> Lưới quan trắc</label>
+    </fieldset>
+    <fieldset>
+      <legend>Góc nhìn</legend>
+      <div class="buttons">
+        <button data-view="3d">3D (view −37.5°, 30°)</button>
+        <button data-view="top">Trên xuống</button>
+        <button data-view="side">Theo chân trời</button>
+      </div>
+    </fieldset>
+    <label>Lần phát hành <output id="fc-origin-value"></output>
+      <input id="fc-origin" type="range" min="0" max="1" step="1" value="20">
+    </label>
+    <p id="fc-status" class="status" role="status"></p>
+  </aside>
+  <main>
+    <div id="fc-surface" class="plot big"></div>
+    <div class="row">
+      <div id="fc-fan" class="plot"></div>
+      <div id="fc-skill" class="plot"></div>
+    </div>
+  </main>
+</section>
+
+<script src="common.js"></script>
+<script src="wave.js"></script>
+<script src="spectrum.js"></script>
+<script src="sea.js"></script>
+<script src="vessel.js"></script>
+<script src="forecast.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

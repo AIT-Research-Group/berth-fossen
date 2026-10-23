@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "berth-fossen"
+version = "0.1.0"
+description = "Research simulator for berth wind, reflected waves and Fossen 3-DOF dynamics"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+training = ["torch>=2.2", "matplotlib>=3.8"]
+hydro = ["scipy>=1.11"]
+dev = ["pytest>=8", "build>=1"]
+figures = ["matplotlib>=3.8", "scipy>=1.11", "playwright>=1.40"]
+
+[project.scripts]
+berth-sim = "berth_sim.cli:main"
+berth-train = "berth_sim.training.run:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

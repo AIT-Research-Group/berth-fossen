@@ -1,0 +1,9 @@
+{
+  "name": "berth-results-report",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Word report generation for saved research outputs",
+  "dependencies": {
+    "docx": "^9.0.0"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "seed": 42,
+  "duration_s": 1800.0,
+  "dt_s": 0.25,
+  "feature_window_s": 600.0,
+  "feature_step_s": 60.0,
+  "gust_window_s": 3.0,
+  "storm": {"center_s": 900.0, "width_s": 300.0, "wind_gain": 0.6, "wave_gain": 0.5, "wave_lag_s": 180.0},
+  "wind": {"mean_speed_mps": 8.0, "sigma_mps": 1.0, "length_scale_m": 80.0, "direction_toward_rad": 0.4},
+  "waves": {
+    "hs_m": 0.6, "tp_s": 5.0, "gamma": 3.3, "depth_m": 15.0,
+    "components": 512, "f_min_hz": 0.05, "f_max_hz": 0.8,
+    "frequency_jitter": true, "random_amplitude": false,
+    "mean_direction_rad": 0.0, "spreading_s": null,
+    "welch_segment_s": 150.0,
+    "reflection": 0.7, "reflection_phase_rad": 0.0,
+    "probe_x_m": [-25.0, -22.3, -18.9],
+    "sensor_noise_std_m": 0.005, "missing_probability": 0.0,
+    "max_condition": 100.0
+  },
+  "vessel": {
+    "enabled": true,
+    "mass_diagonal": [250000000.0, 350000000.0, 3000000000000.0],
+    "linear_damping": [2000000.0, 6000000.0, 80000000000.0],
+    "quadratic_damping": [1000000.0, 4000000.0, 10000000000.0],
+    "initial_state": [-250.0, 0.0, 1.5707963267948966, 0.0, 0.0, 0.0],
+    "hold_position": [-250.0, 0.0, 1.5707963267948966],
+    "hold_kp": [100000.0, 200000.0, 1000000000.0],
+    "hold_kd": [1000000.0, 2000000.0, 10000000000.0],
+    "control_limits": [2000000.0, 2000000.0, 500000000.0],
+    "wind_load": {
+      "air_density_kg_m3": 1.225, "frontal_area_m2": 1500.0,
+      "lateral_area_m2": 9000.0, "length_m": 350.0,
+      "cx": 0.8, "cy": 1.0, "cn": 0.08
+    },
+    "demo_incident_force_rao": [0.0, -200000.0, 0.0],
+    "demo_reflected_force_rao": [0.0, 200000.0, 0.0]
+  }
+}
